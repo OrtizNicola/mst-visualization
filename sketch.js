@@ -1,15 +1,16 @@
 // constants for the nodes
 let COLOR = 255;
 let COLOR_CHOSEN = 120;
-let RADIUS = 10;
+let RADIUS_NODE = 10;
 
 // constants for the edges
 let COLOR_EDGE = 255;
 let WEIGHT = 5;
 
-// array of all the nodes of the graph
-let n_nodes = 5;
+// nodes of the graph
+let n_nodes = 20;
 let nodes = [];
+let unexplored = [];
 
 // the chosen node is the one the user wants to move around
 let chosen = null;
@@ -19,7 +20,42 @@ function setup() {
 
     // initialize all of the nodes
     for (let i = 0; i < n_nodes; i++) {
-        nodes[i] = new Node(random(width), random(height));
+        nodes[i] = new Node(20 + random(width - 40), 40 + random(height - 80));
+    }
+}
+
+function prim() {
+    let explored = [];
+    let index;
+    let edge;
+
+    explored.push(unexplored[0]);
+    unexplored.splice(0, 1);
+
+    // repeat until every node is explored
+    while (unexplored.length > 0) {
+        // initialize the shortest distance
+        let shortest = 1000;
+        // find the unexplored node closest to the explored ones
+        for (let i = 0; i < explored.length; i++) {
+            for (let j = 0; j < unexplored.length; j++) {
+                let node1 = explored[i];
+                let node2 = unexplored[j];
+                let distance = dist(node1.x, node1.y,
+                                    node2.x, node2.y);
+                // if it's the closest, create the edge
+                if (distance < shortest) {
+                    index = j;
+                    shortest = distance;
+                    edge = new Edge(node1, node2);
+                }
+            }
+        }
+        // add the found node to the explored list
+        explored.push(unexplored[index]);
+        unexplored.splice(index, 1);
+        // show the new edge
+        edge.show();
     }
 }
 
@@ -29,7 +65,11 @@ function draw() {
     // show all of the nodes
     for (let i = 0; i < n_nodes; i++) {
         nodes[i].show();
+        // initialize every node as unexplored
+        unexplored.push(nodes[i]);
     }
+    // run Prim's algorithm
+    prim();
 }
 
 function mousePressed() {
@@ -54,45 +94,8 @@ function mouseDragged() {
 
 function mouseReleased() {
     // back to no nodes being selected to move
-    chosen.color = COLOR;
-    chosen = null;
-}
-
-class Node {
-    constructor(_x, _y, _radius = RADIUS, _color = COLOR) {
-        this.x = _x;
-        this.y = _y;
-        this.radius = _radius;
-        this.color = _color;
-    }
-
-    show() {
-        push();
-        noStroke();
-        fill(this.color);
-        circle(this.x, this.y, 2 * this.radius);
-        pop();
-    }
-
-    over(px, py) {
-        return dist(this.x, this.y, px, py) <= this.radius;
-    }
-}
-
-class Edge {
-    constructor(_node1, _node2, _color = COLOR_EDGE, _weight = WEIGHT) {
-        this.node1 = _node1;
-        this.node2 = _node2;
-        this.color = _color;
-        this.weight = _weight;
-    }
-
-    show() {
-        push();
-        stroke(this.color);
-        strokeWeight(this.weight);
-        line(this.node1.x, this.node1.y, 
-             this.node2.x, this.node2.y); 
-        pop();
+    if (chosen) {
+        chosen.color = COLOR;
+        chosen = null;
     }
 }
